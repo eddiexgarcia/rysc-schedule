@@ -1,7 +1,15 @@
 "use strict";
 
 const DATA_URL = "data/games.json";
-const DEFAULT_CLUB = "TSC";
+const DEFAULT_CLUB = "";
+const CLUB_NAMES = {
+  CBSC: "Chinqually Booters",
+  CeYSC: "Centralia",
+  OUSC: "Olympia United",
+  RYSC: "Rochester",
+  TeYSC: "Tenino",
+  TSC: "Tumwater"
+};
 
 const elements = {
   search: document.querySelector("#search"),
@@ -120,8 +128,10 @@ function createGameCard(game, selectedClub) {
   time.append(document.createTextNode(game.timeLabel));
   meta.append(time);
 
-  const side = clubFromTeam(game.home) === selectedClub ? "Home" : "Away";
-  addText(meta, "span", "", side);
+  if (selectedClub) {
+    const side = clubFromTeam(game.home) === selectedClub ? "Home" : "Away";
+    addText(meta, "span", "", side);
+  }
   if (game.cancelled) addText(meta, "span", "cancelled-label", "Cancelled");
   main.append(meta);
 
@@ -150,7 +160,7 @@ function filterGames() {
   const date = elements.date.value;
 
   return schedule.filter((game) => {
-    const clubMatch = clubFromTeam(game.home) === club || clubFromTeam(game.away) === club;
+    const clubMatch = !club || clubFromTeam(game.home) === club || clubFromTeam(game.away) === club;
     const searchMatch = !query || normalize([
       game.home,
       game.away,
@@ -172,7 +182,11 @@ function render() {
   elements.count.textContent = `${games.length} ${games.length === 1 ? "game" : "games"}`;
 
   const url = new URL(window.location.href);
-  url.searchParams.set("club", selectedClub);
+  if (selectedClub) {
+    url.searchParams.set("club", selectedClub);
+  } else {
+    url.searchParams.delete("club");
+  }
   window.history.replaceState({}, "", url);
 }
 
@@ -189,7 +203,10 @@ function populateFilters() {
     clubFromTeam(game.away)
   ]))].filter(Boolean).sort();
   clubs.forEach((club) => {
-    if (!knownClubs.has(club)) elements.club.add(new Option(club, club));
+    if (!knownClubs.has(club)) {
+      const name = CLUB_NAMES[club];
+      elements.club.add(new Option(name ? `${club} — ${name}` : club, club));
+    }
   });
 }
 
