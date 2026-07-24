@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123f82">
+  <meta name="description" content="Search upcoming Rochester Youth Soccer Club games in one place.">
+  <title>RYSC Schedule Finder</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand-mark" aria-hidden="true">
+        <span>RY</span>
+        <small>SC</small>
+      </div>
+      <div>
+        <p class="eyebrow">Rochester Youth Soccer Club</p>
+        <h1>Find your next game</h1>
+        <p class="intro">Search every TCYSA division from one simple schedule.</p>
+      </div>
+    </header>
+
+    <section class="finder" aria-labelledby="finder-title">
+      <h2 id="finder-title" class="sr-only">Schedule filters</h2>
+
+      <div class="primary-filters">
+        <label class="field search-field">
+          <span>Team or opponent</span>
+          <span class="input-wrap">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="search" type="search" placeholder="Try “Sharks” or “Tumwater”" autocomplete="off">
+          </span>
+        </label>
+
+        <label class="field">
+          <span>Club</span>
+          <select id="club" aria-label="Filter by club">
+            <option value="RYSC">RYSC — Rochester</option>
+            <option value="TSC" selected>TSC — Tumwater (summer test)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="secondary-filters">
+        <label class="field">
+          <span>Division</span>
+          <select id="division">
+            <option value="">All divisions</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Date</span>
+          <input id="date" type="date">
+        </label>
+
+        <label class="check-field">
+          <input id="upcoming" type="checkbox" checked>
+          <span>Upcoming only</span>
+        </label>
+
+        <button id="clear" class="clear-button" type="button">Clear filters</button>
+      </div>
+    </section>
+
+    <section class="results-section" aria-labelledby="results-heading">
+      <div class="results-heading">
+        <div>
+          <p id="season" class="season-label">TCYSA Summer 2026</p>
+          <h2 id="results-heading">Game schedule</h2>
+        </div>
+        <p id="result-count" class="result-count" aria-live="polite">Loading games…</p>
+      </div>
+
+      <div id="loading" class="status-card">
+        <span class="loader" aria-hidden="true"></span>
+        <p>Loading the latest schedule…</p>
+      </div>
+
+      <div id="error" class="status-card error-card" hidden>
+        <strong>Schedule unavailable</strong>
+        <p>We couldn’t load the schedule. Please try again shortly.</p>
+        <button id="retry" type="button">Try again</button>
+      </div>
+
+      <div id="empty" class="status-card" hidden>
+        <strong>No matching games</strong>
+        <p>Try another team, division, date, or club.</p>
+      </div>
+
+      <div id="games" class="games" aria-live="polite"></div>
+    </section>
+
+    <footer>
+      <p>Schedule data provided by TCYSA.</p>
+      <p id="updated"></p>
+    </footer>
+  </main>
+</body>
+</html>

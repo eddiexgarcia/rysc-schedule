@@ -1,0 +1,13 @@
+{
+  "name": "rysc-schedule-widget",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Searchable TCYSA schedule widget for Rochester Youth Soccer Club",
+  "scripts": {
+    "refresh": "node parser.js",
+    "serve": "npx --yes serve ."
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
