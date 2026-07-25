@@ -1,8 +1,9 @@
 # RYSC Schedule Finder
 
 A static, mobile-friendly schedule search page for GitHub Pages. The included
-parser collects all 12 TCYSA Summer 2026 division pages. The page filters the
-combined schedule by club, team, opponent, division, date, and upcoming games.
+parser automatically discovers every active division listed on the TCYSA home
+page, including divisions added or removed in future seasons. The page filters
+the combined schedule by club, team, division, field, date, and upcoming games.
 
 ## Test locally
 
@@ -27,15 +28,10 @@ opening `index.html` directly will not load `data/games.json`.
 
 The included workflow refreshes and republishes the schedule every six hours.
 
-## Use RYSC by default
+## Select a club by default
 
-Summer 2026 currently uses TSC as the test club. To switch the default after
-RYSC games are published:
-
-- In `index.html`, move `selected` from TSC to RYSC.
-- In `app.js`, change `DEFAULT_CLUB` from `"TSC"` to `"RYSC"`.
-
-You can also link directly to a club without changing code:
+The public page opens with All clubs selected. To open it with a particular
+club selected, add its abbreviation to the URL:
 
 ```text
 https://YOUR-ACCOUNT.github.io/YOUR-REPOSITORY/?club=RYSC

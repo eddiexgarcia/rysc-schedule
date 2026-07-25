@@ -3,25 +3,9 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
-const SEASON = "TCYSA Summer 2026";
-const SEASON_YEAR = 2026;
 const OUTPUT_FILE = path.join(__dirname, "data", "games.json");
 const BASE_URL = "https://www.thurstoncountysoccer.com";
-
-const SOURCES = [
-  { division: "BU08", path: "/schedule/723289/bu08" },
-  { division: "BU09/U10 Green", path: "/schedule/723290/bu09u10-green" },
-  { division: "BU09/U10 Orange", path: "/schedule/723291/bu09u10-orange" },
-  { division: "BU11/U12", path: "/schedule/723292/bu11u12" },
-  { division: "BU13/U14", path: "/schedule/723293/bu13u14" },
-  { division: "BHS", path: "/schedule/723288/bhs" },
-  { division: "GU08", path: "/schedule/723283/gu08" },
-  { division: "GU09/U10 Green", path: "/schedule/723284/gu09u10-green" },
-  { division: "GU09/U10 Orange", path: "/schedule/723285/gu09u10-orange" },
-  { division: "GU11/U12", path: "/schedule/723286/gu11u12" },
-  { division: "GU13/U14", path: "/schedule/723287/gu13u14" },
-  { division: "GHS", path: "/schedule/723282/ghs" }
-];
+const HOME_PATH = "/home";
 
 function decodeHtml(value = "") {
   const named = {
@@ -66,12 +50,12 @@ function captureMapUrl(row) {
   }
 }
 
-function parseDate(dateLabel) {
+function parseDate(dateLabel, seasonYear) {
   const match = dateLabel.match(/\b(\d{1,2})\/(\d{1,2})\b/);
   if (!match) return "";
   const month = match[1].padStart(2, "0");
   const day = match[2].padStart(2, "0");
-  return `${SEASON_YEAR}-${month}-${day}`;
+  return `${seasonYear}-${month}-${day}`;
 }
 
 function parseTime(timeLabel) {
@@ -85,7 +69,7 @@ function parseTime(timeLabel) {
   return `${String(hour).padStart(2, "0")}:${minute}`;
 }
 
-function parseSchedule(html, source) {
+function parseSchedule(html, source, seasonYear) {
   const rows = html.match(
     /<tr\b[^>]*class="rg(?:Alt)?Row"[^>]*id="ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00__\d+"[^>]*>[\s\S]*?<\/tr>/gi
   ) || [];
@@ -96,7 +80,7 @@ function parseSchedule(html, source) {
     const home = capture(row, "HomeLabel");
     const away = capture(row, "AwayLabel");
     const location = capture(row, "ScheduleLabel");
-    const date = parseDate(dateLabel);
+    const date = parseDate(dateLabel, seasonYear);
     const time24 = parseTime(timeLabel);
 
     if (!date || !time24 || !home || !away) return null;
@@ -130,7 +114,7 @@ async function fetchPage(source) {
     const response = await fetch(url, {
       headers: {
         "Accept": "text/html,application/xhtml+xml",
-        "User-Agent": "RYSC-Schedule-Widget/1.0 (+https://www.rochesteryouthsoccer.org/)"
+        "User-Agent": "TCYSA-Schedule-Widget/1.0"
       },
       signal: controller.signal
     });
@@ -141,14 +125,61 @@ async function fetchPage(source) {
   }
 }
 
+function discoverSources(html) {
+  const sources = [];
+  const seen = new Set();
+  const anchors = html.matchAll(/<a\b[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi);
+
+  for (const anchor of anchors) {
+    const division = decodeHtml(anchor[3]);
+    if (!division) continue;
+
+    let url;
+    try {
+      url = new URL(decodeHtml(anchor[2]), BASE_URL);
+    } catch {
+      continue;
+    }
+
+    const match = url.pathname.match(/(?:\/sites\/tcysa)?(\/schedule\/\d+\/[^/?#]+)/i);
+    if (!match) continue;
+
+    const schedulePath = match[1].toLowerCase();
+    if (seen.has(schedulePath)) continue;
+    seen.add(schedulePath);
+    sources.push({ division, path: schedulePath });
+  }
+
+  return sources;
+}
+
+function discoverSeason(pages) {
+  for (const page of pages) {
+    const text = decodeHtml(page.html);
+    const match = text.match(/\bTCYSA\s+(?:Spring|Summer|Fall|Winter)\s+20\d{2}\b/i);
+    if (match) {
+      const season = match[0].replace(/\s+/g, " ");
+      const year = Number(season.match(/\b20\d{2}\b/)?.[0]);
+      if (Number.isInteger(year)) return { season, year };
+    }
+  }
+  throw new Error("The active TCYSA season could not be identified.");
+}
+
 async function main() {
+  const homeHtml = await fetchPage({ division: "TCYSA home page", path: HOME_PATH });
+  const sources = discoverSources(homeHtml);
+  if (sources.length === 0) {
+    throw new Error("No active division schedule links were found on the TCYSA home page.");
+  }
+
   const results = await Promise.allSettled(
-    SOURCES.map(async (source) => parseSchedule(await fetchPage(source), source))
+    sources.map(async (source) => ({ source, html: await fetchPage(source) }))
   );
 
   const errors = results
     .map((result, index) => result.status === "rejected"
-      ? `${SOURCES[index].division}: ${result.reason?.message || result.reason}`
+      ? `${sources[index].division}: ${result.reason?.message || result.reason}`
       : null)
     .filter(Boolean);
 
@@ -156,8 +187,11 @@ async function main() {
     throw new Error(`Schedule refresh failed:\n${errors.join("\n")}`);
   }
 
-  const games = results
-    .flatMap((result) => result.value)
+  const pages = results.map((result) => result.value);
+  const { season, year } = discoverSeason(pages);
+
+  const games = pages
+    .flatMap(({ source, html }) => parseSchedule(html, source, year))
     .sort((a, b) => (
       a.date.localeCompare(b.date) ||
       a.time24.localeCompare(b.time24) ||
@@ -172,9 +206,9 @@ async function main() {
 
   const payload = {
     meta: {
-      season: SEASON,
+      season,
       generatedAt: new Date().toISOString(),
-      sourceCount: SOURCES.length,
+      sourceCount: sources.length,
       gameCount: games.length
     },
     games
@@ -182,7 +216,7 @@ async function main() {
 
   await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
   await fs.writeFile(OUTPUT_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  console.log(`Saved ${games.length} games from ${SOURCES.length} TCYSA divisions.`);
+  console.log(`Saved ${games.length} games from ${sources.length} TCYSA divisions for ${season}.`);
 }
 
 main().catch((error) => {
