@@ -15,6 +15,7 @@ const elements = {
   search: document.querySelector("#search"),
   club: document.querySelector("#club"),
   division: document.querySelector("#division"),
+  location: document.querySelector("#location"),
   date: document.querySelector("#date"),
   upcoming: document.querySelector("#upcoming"),
   clear: document.querySelector("#clear"),
@@ -157,20 +158,17 @@ function filterGames() {
   const query = normalize(elements.search.value);
   const club = elements.club.value.toUpperCase();
   const division = elements.division.value;
+  const location = elements.location.value;
   const date = elements.date.value;
 
   return schedule.filter((game) => {
     const clubMatch = !club || clubFromTeam(game.home) === club || clubFromTeam(game.away) === club;
-    const searchMatch = !query || normalize([
-      game.home,
-      game.away,
-      game.location,
-      game.division
-    ].join(" ")).includes(query);
+    const searchMatch = !query || normalize([game.home, game.away].join(" ")).includes(query);
     const divisionMatch = !division || game.division === division;
+    const locationMatch = !location || game.location === location;
     const dateMatch = !date || game.date === date;
     const upcomingMatch = !elements.upcoming.checked || isUpcoming(game);
-    return clubMatch && searchMatch && divisionMatch && dateMatch && upcomingMatch;
+    return clubMatch && searchMatch && divisionMatch && locationMatch && dateMatch && upcomingMatch;
   });
 }
 
@@ -196,6 +194,12 @@ function populateFilters() {
   elements.division.replaceChildren(new Option("All divisions", ""));
   divisions.forEach((division) => elements.division.add(new Option(division, division)));
   elements.division.value = currentDivision;
+
+  const locations = [...new Set(schedule.map((game) => game.location).filter(Boolean))].sort();
+  const currentLocation = elements.location.value;
+  elements.location.replaceChildren(new Option("All fields", ""));
+  locations.forEach((location) => elements.location.add(new Option(location, location)));
+  elements.location.value = currentLocation;
 
   const knownClubs = new Set([...elements.club.options].map((option) => option.value));
   const clubs = [...new Set(schedule.flatMap((game) => [
@@ -252,6 +256,7 @@ function clearFilters() {
   elements.search.value = "";
   elements.club.value = DEFAULT_CLUB;
   elements.division.value = "";
+  elements.location.value = "";
   elements.date.value = "";
   elements.upcoming.checked = true;
   render();
@@ -261,6 +266,7 @@ function clearFilters() {
   elements.search.addEventListener(eventName, render);
   elements.club.addEventListener(eventName, render);
   elements.division.addEventListener(eventName, render);
+  elements.location.addEventListener(eventName, render);
   elements.date.addEventListener(eventName, render);
   elements.upcoming.addEventListener(eventName, render);
 });

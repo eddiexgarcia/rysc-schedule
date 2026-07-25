@@ -100,7 +100,7 @@ h1 {
 }
 
 .secondary-filters {
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.7fr) auto auto;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1fr) minmax(150px, 0.7fr) auto auto;
   align-items: end;
   margin-top: 16px;
   padding-top: 16px;
@@ -471,17 +471,6 @@ footer p {
 
   .hero {
     align-items: flex-start;
-  }
-
-  .brand-mark {
-    width: 62px;
-    height: 62px;
-    border-radius: 19px;
-    font-size: 21px;
-  }
-
-  .brand-mark small {
-    font-size: 13px;
   }
 
   .intro {

@@ -23,10 +23,10 @@
 
       <div class="primary-filters">
         <label class="field search-field">
-          <span>Team or opponent</span>
+          <span>Search teams</span>
           <span class="input-wrap">
             <span class="search-icon" aria-hidden="true"></span>
-            <input id="search" type="search" placeholder="Try “Sharks” or “Tumwater”" autocomplete="off">
+            <input id="search" type="search" placeholder="Enter a team name" autocomplete="off">
           </span>
         </label>
 
@@ -49,6 +49,13 @@
           <span>Division</span>
           <select id="division">
             <option value="">All divisions</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Field</span>
+          <select id="location">
+            <option value="">All fields</option>
           </select>
         </label>
 
@@ -88,7 +95,7 @@
 
       <div id="empty" class="status-card" hidden>
         <strong>No matching games</strong>
-        <p>Try another team, division, date, or club.</p>
+        <p>Try another team, club, division, field, or date.</p>
       </div>
 
       <div id="games" class="games" aria-live="polite"></div>
