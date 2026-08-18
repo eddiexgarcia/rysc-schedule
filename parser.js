@@ -166,11 +166,34 @@ function discoverSeason(pages) {
   throw new Error("The active TCYSA season could not be identified.");
 }
 
+async function savePayload(payload) {
+  await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
+  await fs.writeFile(OUTPUT_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+async function saveWaitingState(season = "TCYSA Schedule") {
+  const payload = {
+    meta: {
+      season,
+      generatedAt: new Date().toISOString(),
+      sourceCount: 0,
+      gameCount: 0,
+      status: "waiting",
+      message: "The next TCYSA season schedule has not been published yet. Please check back soon."
+    },
+    games: []
+  };
+
+  await savePayload(payload);
+  console.log("No active TCYSA schedules are published. Saved a waiting state instead.");
+}
+
 async function main() {
   const homeHtml = await fetchPage({ division: "TCYSA home page", path: HOME_PATH });
   const sources = discoverSources(homeHtml);
   if (sources.length === 0) {
-    throw new Error("No active division schedule links were found on the TCYSA home page.");
+    await saveWaitingState();
+    return;
   }
 
   const results = await Promise.allSettled(
@@ -201,7 +224,8 @@ async function main() {
     .map(({ sourceOrder, ...game }) => game);
 
   if (games.length === 0) {
-    throw new Error("No schedule rows were found; keeping the previous data file.");
+    await saveWaitingState(season);
+    return;
   }
 
   const payload = {
@@ -214,8 +238,7 @@ async function main() {
     games
   };
 
-  await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
-  await fs.writeFile(OUTPUT_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  await savePayload(payload);
   console.log(`Saved ${games.length} games from ${sources.length} TCYSA divisions for ${season}.`);
 }
 

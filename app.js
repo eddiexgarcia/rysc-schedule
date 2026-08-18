@@ -24,6 +24,8 @@ const elements = {
   loading: document.querySelector("#loading"),
   error: document.querySelector("#error"),
   empty: document.querySelector("#empty"),
+  emptyTitle: document.querySelector("#empty-title"),
+  emptyMessage: document.querySelector("#empty-message"),
   count: document.querySelector("#result-count"),
   season: document.querySelector("#season"),
   updated: document.querySelector("#updated")
@@ -176,6 +178,11 @@ function render() {
   const games = filterGames();
   const selectedClub = elements.club.value.toUpperCase();
   elements.games.replaceChildren(...games.map((game) => createGameCard(game, selectedClub)));
+  const waitingForSchedule = schedule.length === 0 && metadata.status === "waiting";
+  elements.emptyTitle.textContent = waitingForSchedule ? "Schedule coming soon" : "No matching games";
+  elements.emptyMessage.textContent = waitingForSchedule
+    ? metadata.message
+    : "Try another team, club, division, field, or date.";
   elements.empty.hidden = games.length !== 0;
   elements.count.textContent = `${games.length} ${games.length === 1 ? "game" : "games"}`;
 

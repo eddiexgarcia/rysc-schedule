@@ -4,10 +4,12 @@ A static, mobile-friendly schedule search page for GitHub Pages. The included
 parser automatically discovers every active division listed on the TCYSA home
 page, including divisions added or removed in future seasons. The page filters
 the combined schedule by club, team, division, field, date, and upcoming games.
+Between seasons, the refresh completes normally and shows a schedule-coming-soon
+message instead of failing repeatedly.
 
 ## Test locally
 
-Requires Node.js 20 or newer.
+Requires Node.js 24 or newer.
 
 ```bash
 npm run refresh
@@ -23,9 +25,6 @@ opening `index.html` directly will not load `data/games.json`.
 2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
 3. Open the **Actions** tab and run **Refresh schedule** once if it does not
    start automatically.
-4. In **Settings → Actions → General**, allow workflows to read and write the
-   repository so the schedule refresh can commit updates.
-
 The included workflow refreshes and republishes the schedule every six hours.
 
 ## Select a club by default
